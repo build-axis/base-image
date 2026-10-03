@@ -1,0 +1,48 @@
+name: Build and Push
+on:
+  push:
+    branches:
+      - "**"
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
+      - 'LICENSE'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine tag name
+        id: vars
+        shell: bash
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          if [ "$BRANCH" == "main" ]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$BRANCH" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # Added platforms support here
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ steps.vars.outputs.tag }}
