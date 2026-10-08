@@ -17,6 +17,11 @@ FROM python:3.12-slim-bookworm
 #   sudo         — allows installing packages (apt, npm -g) when needed
 #   procps       — ps/top/kill for process diagnostics
 #   vim          — editor with syntax highlighting (vimrc.local: syntax on)
+#   build-essential — gcc/g++/make for npm packages with native builds
+#                     (node-gyp); without it `npm ci` fails on any dep
+#                     that has no prebuilt binary
+#   default-mysql-client — mysql CLI for debugging site DBs from inside
+#   jq, zip      — CI/script helpers
 # Python 3.12 is already in the base image (python:3.12-slim).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -33,6 +38,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         sqlite3 \
         procps \
         vim \
+        build-essential \
+        default-mysql-client \
+        jq \
+        zip \
     && rm -rf /var/lib/apt/lists/* \
     && sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
     && locale-gen \
@@ -75,6 +84,7 @@ RUN curl -fsSL https://packages.sury.org/php/apt.gpg \
         php8.4-intl \
         php8.4-bcmath \
         php8.4-gd \
+        php8.4-pcov \
         unzip \
     && rm -rf /var/lib/apt/lists/*
 
@@ -93,6 +103,13 @@ RUN { \
     echo 'opcache.validate_timestamps=${PHP_OPCACHE_VALIDATE_TIMESTAMPS:-1}'; \
     echo 'opcache.fast_shutdown=1'; \
     } > /etc/php/8.4/cli/conf.d/99-opcache-optimized.ini
+
+# pcov — coverage driver so `php artisan test --coverage` works out of the
+# box (negligible overhead when coverage is not being collected).
+RUN echo 'pcov.enabled=1' > /etc/php/8.4/cli/conf.d/98-pcov.ini
+
+# PyYAML — workflow/lint helpers (yaml.safe_load) usable without pip install.
+RUN pip install --no-cache-dir pyyaml
 
 # --- Working directories ---
 RUN mkdir -p /workspace \
