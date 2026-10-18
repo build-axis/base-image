@@ -64,8 +64,28 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
+# --- JS test tooling (frontend tests) ---
+# Test stack for the Vue 2.7 projects in the workspace:
+#   vitest + @vitest/coverage-v8 — runner + `vitest --coverage`
+#   jest                         — the legacy `npm test` script target
+#   jsdom                        — DOM environment for component tests
+#   @vue/test-utils@1 + vue-template-compiler@2 — mounting Vue 2.7 SFCs
+#   (major pins keep the Vue 2 line; Vue 3 uses @vue/test-utils@2)
+# Installed globally so the CLI runners exist out of the box; a project
+# still needs the matching packages in its devDependencies for test
+# file imports to resolve from local node_modules.
+RUN npm install -g \
+        vitest \
+        @vitest/coverage-v8 \
+        jest \
+        jsdom \
+        @vue/test-utils@1 \
+        vue-template-compiler@2
+
 # --- PHP 8.4 (deb.sury.org) ---
 # Runtime for PHP projects in the workspace: pdo_mysql, pdo_sqlite, opcache, redis.
+# imagick — needed by the laravel-file-upload tests (image info/preview);
+# without it those tests skip instead of exercising real code.
 # pcntl is already built into php8.4-cli on Debian.
 RUN curl -fsSL https://packages.sury.org/php/apt.gpg \
         -o /usr/share/keyrings/deb.sury.org-php.gpg \
@@ -84,8 +104,28 @@ RUN curl -fsSL https://packages.sury.org/php/apt.gpg \
         php8.4-intl \
         php8.4-bcmath \
         php8.4-gd \
+        php8.4-imagick \
         php8.4-pcov \
         unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# --- Image toolchain (mirrors the prod php image) ---
+# The file-upload code inspects real assets: imagemagick delegates to
+# ghostscript for PDF/EPS and to inkscape for CDR; liblcms2 keeps ICC
+# colour handling identical to prod. The policy/delegate edits are the
+# same as in the prod Dockerfile — stock Debian IM refuses PDF and has
+# no working CDR delegate. (libpng/libjpeg/freetype/zip/icu -dev
+# packages are skipped: prod needs them to compile extensions via
+# docker-php-ext-*, our extensions come prebuilt from sury.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ghostscript \
+        imagemagick \
+        inkscape \
+        liblcms2-2 \
+    && sed -i 's/rights="none" pattern="PDF"/rights="read|write" pattern="PDF"/g' /etc/ImageMagick-6/policy.xml \
+    && sed -i 's/rights="none" pattern="CDR"/rights="read|write" pattern="CDR"/g' /etc/ImageMagick-6/delegates.xml \
+    && sed -i '/delegate.*decode="cdr"/d' /etc/ImageMagick-6/delegates.xml \
+    && sed -i '/<delegatemap>/a \  <delegate decode="cdr" command="cp &quot;%i&quot; &quot;%i.cdr&quot;; inkscape &quot;%i.cdr&quot; --export-filename=&quot;%o.svg&quot;; mv &quot;%o.svg&quot; &quot;%o&quot;; rm -f &quot;%i.cdr&quot;"/>' /etc/ImageMagick-6/delegates.xml \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Composer ---
