@@ -80,7 +80,18 @@ RUN npm install -g \
         jest \
         jsdom \
         @vue/test-utils@1 \
-        vue-template-compiler@2
+        vue-template-compiler@2 \
+        playwright
+
+# Playwright browsers — shared path instead of $HOME so the `node` user
+# (and any CI job) can run them; --with-deps pulls the OS libraries
+# (nss, libgbm, fonts). Chromium only — enough for the migration
+# regression suite; add firefox/webkit later if cross-browser needed.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN mkdir -p "$PLAYWRIGHT_BROWSERS_PATH" \
+    && playwright install --with-deps chromium \
+    && chmod -R 777 "$PLAYWRIGHT_BROWSERS_PATH" \
+    && rm -rf /var/lib/apt/lists/*
 
 # --- PHP 8.4 (deb.sury.org) ---
 # Runtime for PHP projects in the workspace: pdo_mysql, pdo_sqlite, opcache, redis.
