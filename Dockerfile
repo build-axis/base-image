@@ -107,7 +107,7 @@ RUN curl -fsSL https://packages.sury.org/php/apt.gpg \
         php8.4-mysql=8.4.27-* \
         php8.4-sqlite3=8.4.27-* \
         php8.4-opcache=8.4.27-* \
-        php8.4-redis=8.4.27-* \
+        php8.4-redis \
         php8.4-mbstring=8.4.27-* \
         php8.4-xml=8.4.27-* \
         php8.4-curl=8.4.27-* \
@@ -115,8 +115,8 @@ RUN curl -fsSL https://packages.sury.org/php/apt.gpg \
         php8.4-intl=8.4.27-* \
         php8.4-bcmath=8.4.27-* \
         php8.4-gd=8.4.27-* \
-        php8.4-imagick=8.4.27-* \
-        php8.4-pcov=8.4.27-* \
+        php8.4-imagick \
+        php8.4-pcov \
         unzip \
     && rm -rf /var/lib/apt/lists/*
 
