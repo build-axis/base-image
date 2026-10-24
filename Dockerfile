@@ -93,7 +93,7 @@ RUN mkdir -p "$PLAYWRIGHT_BROWSERS_PATH" \
     && chmod -R 777 "$PLAYWRIGHT_BROWSERS_PATH" \
     && rm -rf /var/lib/apt/lists/*
 
-# --- PHP 8.4 (deb.sury.org) ---
+# --- PHP 8.4.27 (deb.sury.org, pinned) ---
 # Runtime for PHP projects in the workspace: pdo_mysql, pdo_sqlite, opcache, redis.
 # imagick — needed by the laravel-file-upload tests (image info/preview);
 # without it those tests skip instead of exercising real code.
@@ -103,20 +103,20 @@ RUN curl -fsSL https://packages.sury.org/php/apt.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ bookworm main" \
         > /etc/apt/sources.list.d/sury-php.list \
     && apt-get update && apt-get install -y --no-install-recommends \
-        php8.4-cli \
-        php8.4-mysql \
-        php8.4-sqlite3 \
-        php8.4-opcache \
-        php8.4-redis \
-        php8.4-mbstring \
-        php8.4-xml \
-        php8.4-curl \
-        php8.4-zip \
-        php8.4-intl \
-        php8.4-bcmath \
-        php8.4-gd \
-        php8.4-imagick \
-        php8.4-pcov \
+        php8.4-cli=8.4.27-* \
+        php8.4-mysql=8.4.27-* \
+        php8.4-sqlite3=8.4.27-* \
+        php8.4-opcache=8.4.27-* \
+        php8.4-redis=8.4.27-* \
+        php8.4-mbstring=8.4.27-* \
+        php8.4-xml=8.4.27-* \
+        php8.4-curl=8.4.27-* \
+        php8.4-zip=8.4.27-* \
+        php8.4-intl=8.4.27-* \
+        php8.4-bcmath=8.4.27-* \
+        php8.4-gd=8.4.27-* \
+        php8.4-imagick=8.4.27-* \
+        php8.4-pcov=8.4.27-* \
         unzip \
     && rm -rf /var/lib/apt/lists/*
 
